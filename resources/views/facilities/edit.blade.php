@@ -60,7 +60,7 @@
                 <label class="form-label" for="image">Change Facility Photo (Optional)</label>
                 @if($facility->image_url)
                     <div style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.75rem;">
-                        <img src="{{ $facility->image_url }}" alt="{{ $facility->name }}" style="height: 60px; width: 80px; object-fit: cover; border-radius: 6px; border: 1px solid var(--color-border, #cbd5e1);">
+                        <img src="{{ $facility->image_url }}" alt="{{ $facility->name }}" style="height: 60px; width: 80px; object-fit: cover; border-radius: 6px; border: 1px solid var(--color-border, #cbd5e1);" onerror="this.parentElement.style.display='none';">
                         <span class="text-muted" style="font-size: 0.8rem;">Current photo uploaded</span>
                     </div>
                 @endif

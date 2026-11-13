@@ -178,3 +178,14 @@ Route::middleware('auth')->group(function () {
     Route::delete('/backups/{filename}', [BackupController::class, 'destroy']);
 });
 
+// ─── Public Storage Fallback (serves uploaded files if symlink is unavailable) ───
+Route::get('/storage/{path}', function (string $path) {
+    $fullPath = storage_path('app/public/' . $path);
+    if (!file_exists($fullPath) || !is_file($fullPath)) {
+        abort(404);
+    }
+    return response()->file($fullPath, [
+        'Cache-Control' => 'public, max-age=86400',
+    ]);
+})->where('path', '.*');
+

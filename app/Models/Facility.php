@@ -53,6 +53,15 @@ class Facility extends Model
         if (str_starts_with($this->image, 'http://') || str_starts_with($this->image, 'https://') || str_starts_with($this->image, '/')) {
             return $this->image;
         }
+
+        // Verify that the file exists in storage or public
+        $storagePath = storage_path('app/public/' . $this->image);
+        $publicPath  = public_path('storage/' . $this->image);
+
+        if (!file_exists($storagePath) && !file_exists($publicPath)) {
+            return null;
+        }
+
         return asset('storage/' . $this->image);
     }
 }

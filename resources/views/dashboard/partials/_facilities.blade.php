@@ -69,7 +69,7 @@
                         <td data-label="Name" style="font-weight: 600;">
                             <div style="display: flex; align-items: center; gap: 0.75rem;">
                                 @if($f->image_url)
-                                    <img src="{{ $f->image_url }}" alt="{{ $f->name }}" style="width: 42px; height: 42px; border-radius: 6px; object-fit: cover; border: 1px solid var(--color-border, #cbd5e1); flex-shrink: 0;">
+                                    <img src="{{ $f->image_url }}" alt="{{ $f->name }}" style="width: 42px; height: 42px; border-radius: 6px; object-fit: cover; border: 1px solid var(--color-border, #cbd5e1); flex-shrink: 0;" onerror="this.onerror=null; this.style.display='none';">
                                 @else
                                     <div style="width: 42px; height: 42px; border-radius: 6px; background: rgba(14, 165, 233, 0.08); display: flex; align-items: center; justify-content: center; color: var(--color-brand-600, #0284c7); flex-shrink: 0;">
                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>

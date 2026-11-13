@@ -16,7 +16,9 @@ WORKDIR /var/www/html
 COPY . .
 COPY --from=assets /app/public/build public/build
 RUN composer install --no-dev --optimize-autoloader --no-interaction \
+    && php artisan storage:link \
     && chown -R www-data:www-data storage bootstrap/cache
-CMD sed -i "s/Listen 80/Listen ${PORT:-80}/" /etc/apache2/ports.conf \
+CMD php artisan storage:link --force \
+    && sed -i "s/Listen 80/Listen ${PORT:-80}/" /etc/apache2/ports.conf \
     && sed -i "s/:80/:${PORT:-80}/" /etc/apache2/sites-available/000-default.conf \
     && apache2-foreground

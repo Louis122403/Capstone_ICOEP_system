@@ -47,7 +47,7 @@
             <div class="card-body">
                 @if($facility->image_url)
                     <div style="margin-bottom: 1.25rem;">
-                        <img src="{{ $facility->image_url }}" alt="{{ $facility->name }}" style="width: 100%; max-height: 280px; object-fit: cover; border-radius: 8px; border: 1px solid var(--color-border, #cbd5e1);">
+                        <img src="{{ $facility->image_url }}" alt="{{ $facility->name }}" style="width: 100%; max-height: 280px; object-fit: cover; border-radius: 8px; border: 1px solid var(--color-border, #cbd5e1);" onerror="this.parentElement.style.display='none';">
                     </div>
                 @endif
                 <p style="line-height: 1.8;">{{ $facility->description ?: 'No description available.' }}</p>
