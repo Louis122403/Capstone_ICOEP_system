@@ -1023,8 +1023,8 @@ select.form-control {
 
 .form-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--spacing-lg);
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: var(--spacing-md);
 }
 
 /* Checkbox & Radio */
@@ -1428,6 +1428,35 @@ select.form-control {
     border-color: var(--color-accent-primary);
 }
 
+/* Scope Segmented Control (tab pill groups) */
+.scope-segmented-control {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .scope-segmented-control {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;          /* Firefox */
+        -ms-overflow-style: none;       /* IE/Edge */
+        padding-bottom: 4px;
+        width: 100%;
+    }
+    .scope-segmented-control::-webkit-scrollbar {
+        display: none;                  /* Chrome/Safari */
+    }
+    .scope-segmented-control .filter-btn {
+        flex-shrink: 0;
+        white-space: nowrap;
+        font-size: 0.75rem;
+        padding: 6px 12px;
+    }
+}
+
 /* ============================================================
    20. ITEM CARDS (Facility, Equipment, Events)
    ============================================================ */
@@ -1703,6 +1732,15 @@ select.form-control {
     
     .search-input-wrapper {
         min-width: 100%;
+    }
+    
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .card-header .scope-segmented-control {
+        width: 100%;
     }
 }
 

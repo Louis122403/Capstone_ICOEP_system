@@ -2,6 +2,7 @@
     $isStandalone = request()->is('equipment/returns*');
     $baseUrl = $isStandalone ? url('/equipment/returns') : url('/dashboard');
     $returnDeskUrl = $isStandalone ? url('/equipment/returns') : url('/dashboard?section=equipment-returns');
+    $returnDeskSep = str_contains($returnDeskUrl, '?') ? '&' : '?';
     $selectedTab = request()->get('tab', 'active');
     if ($selectedRequest && !request()->has('tab')) {
         // If an item is selected and no tab specified, default to active
@@ -92,6 +93,37 @@
     @media (max-width: 640px) {
         .returns-stats-grid {
             grid-template-columns: 1fr;
+        }
+    }
+
+    /* ── Scope Segmented Control (tab pills) ── */
+    .scope-segmented-control {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    @media (max-width: 768px) {
+        .scope-segmented-control {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding-bottom: 4px;
+            width: 100%;
+            max-width: 100%;
+        }
+        .scope-segmented-control::-webkit-scrollbar {
+            display: none;
+        }
+        .scope-segmented-control .filter-btn,
+        .scope-segmented-control .tab-btn {
+            flex: 0 0 auto;
+            white-space: nowrap;
+            font-size: 0.75rem;
+            padding: 6px 12px;
         }
     }
 </style>
@@ -269,7 +301,7 @@
                                         <x-status-badge :status="$m->status" />
                                     </td>
                                     <td data-label="Action">
-                                        <a href="{{ $returnDeskUrl . '?request_id=' . $m->id . ($search ? '&search=' . urlencode($search) : '') }}" class="btn btn-primary btn-sm" style="width: 100%;">
+                                        <a href="{{ $returnDeskUrl . $returnDeskSep . 'request_id=' . $m->id . ($search ? '&search=' . urlencode($search) : '') }}" class="btn btn-primary btn-sm" style="width: 100%;">
                                             Select & Inspect
                                         </a>
                                     </td>
@@ -369,10 +401,23 @@
             <div>
                 <span class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600;">Dates & Schedule</span>
                 <div style="font-size: 0.85rem; font-weight: 500;">
-                    Borrowed: {{ $selectedRequest->date_needed ? $selectedRequest->date_needed->format('M d, Y') : '—' }}
+                    Borrowed: 
+                    @if($selectedRequest->borrowed_at)
+                        {{ $selectedRequest->borrowed_at->format('M d, Y h:i A') }}
+                    @else
+                        {{ $selectedRequest->date_needed ? $selectedRequest->date_needed->format('M d, Y') : '—' }}
+                        @if($selectedRequest->time_needed)
+                            ({{ \Carbon\Carbon::parse($selectedRequest->time_needed)->format('g:i A') }})
+                        @else
+                            <span style="font-size: 0.75rem; color: var(--color-text-muted); font-style: italic;">(no time recorded)</span>
+                        @endif
+                    @endif
                 </div>
                 <div style="font-size: 0.85rem; font-weight: 600; color: {{ $daysLate > 0 ? '#dc2626' : 'inherit' }};">
                     Due: {{ $selectedRequest->expected_return_date ? $selectedRequest->expected_return_date->format('M d, Y') : '—' }}
+                    @if($selectedRequest->expected_return_time)
+                        ({{ \Carbon\Carbon::parse($selectedRequest->expected_return_time)->format('g:i A') }})
+                    @endif
                 </div>
                 @if($selectedRequest->returned_at)
                     <div style="font-size: 0.85rem; color: #059669; font-weight: 600;">
@@ -505,8 +550,8 @@
 @endif
 
 {{-- Returns & Borrow Management Card with Tabs --}}
-<div class="card animate-fade-in-up" style="animation-delay: 200ms;">
-    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+<div class="card animate-fade-in-up" style="animation-delay: 200ms; overflow: hidden;">
+    <div class="card-header" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.75rem;">
         <div>
             <h3 class="card-title" style="margin: 0;">Equipment Returns &amp; Borrow Tracking</h3>
             <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0.2rem 0 0 0;">
@@ -559,7 +604,7 @@
                             <th>Borrower</th>
                             <th>Equipment</th>
                             <th>Qty Due</th>
-                            <th>Date Borrowed</th>
+                            <th>Time Borrowed</th>
                             <th>Expected Return</th>
                             <th>Status</th>
                             <th>Action</th>
@@ -598,12 +643,21 @@
                                         <div style="font-size: 0.7rem; color: #0284c7;">({{ $req->returned_quantity }} returned)</div>
                                     @endif
                                 </td>
-                                <td data-label="Date Borrowed">
-                                    {{ $req->date_needed ? $req->date_needed->format('M d, Y') : '—' }}
+                                <td data-label="Time Borrowed">
+                                    @if($req->borrowed_at)
+                                        <div style="font-weight: 500;">{{ $req->borrowed_at->format('M d, Y') }}</div>
+                                        <div style="font-size: 0.75rem; color: var(--color-text-muted);">{{ $req->borrowed_at->format('h:i A') }}</div>
+                                    @else
+                                        <div>{{ $req->date_needed ? $req->date_needed->format('M d, Y') : '—' }}</div>
+                                        <div style="font-size: 0.7rem; color: var(--color-text-muted); font-style: italic;">No time recorded</div>
+                                    @endif
                                 </td>
                                 <td data-label="Expected Return">
                                     <div style="font-weight: 500;">
                                         {{ $req->expected_return_date ? $req->expected_return_date->format('M d, Y') : '—' }}
+                                        @if($req->expected_return_time)
+                                            <span style="font-size: 0.75rem; color: var(--color-text-muted);">({{ \Carbon\Carbon::parse($req->expected_return_time)->format('g:i A') }})</span>
+                                        @endif
                                     </div>
                                     @if($isOverdue)
                                         <span class="badge badge-error" style="font-size: 0.7rem; margin-top: 0.2rem;">{{ $daysOverdue }}d Overdue</span>
@@ -621,7 +675,7 @@
                                 </td>
                                 <td data-label="Action">
                                     <div style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;">
-                                        <a href="{{ $returnDeskUrl . '?request_id=' . $req->id }}" class="btn btn-primary btn-sm" style="font-size: 0.75rem; white-space: nowrap;">
+                                        <a href="{{ $returnDeskUrl . $returnDeskSep . 'request_id=' . $req->id }}" class="btn btn-primary btn-sm" style="font-size: 0.75rem; white-space: nowrap;">
                                             Process Return
                                         </a>
                                         @if($isOverdue)
@@ -696,7 +750,7 @@
                                     @endif
                                 </td>
                                 <td data-label="Action">
-                                    <a href="{{ $returnDeskUrl . '?request_id=' . $nc->id }}" class="btn btn-primary btn-sm" style="font-size: 0.75rem; width: 100%;">
+                                    <a href="{{ $returnDeskUrl . $returnDeskSep . 'request_id=' . $nc->id }}" class="btn btn-primary btn-sm" style="font-size: 0.75rem; width: 100%;">
                                         Inspect & Confirm
                                     </a>
                                 </td>
@@ -756,7 +810,7 @@
                                 </td>
                                 <td data-label="Action">
                                     <div class="btn-group" style="display: flex; gap: 0.35rem; align-items: center; width: 100%;">
-                                        <a href="{{ $returnDeskUrl . '?request_id=' . $od->id }}" class="btn btn-primary btn-sm" style="font-size: 0.75rem;">
+                                        <a href="{{ $returnDeskUrl . $returnDeskSep . 'request_id=' . $od->id }}" class="btn btn-primary btn-sm" style="font-size: 0.75rem;">
                                             Process Return
                                         </a>
                                         <form method="POST" action="{{ url('/equipment-requests/' . $od->id . '/send-reminder') }}" style="margin: 0; flex: 1;">
@@ -812,14 +866,25 @@
                                     <div style="font-size: 0.75rem; color: var(--color-text-muted);">{{ $td->equipment->category }}</div>
                                 </td>
                                 <td data-label="Qty">{{ $td->quantity - $td->returned_quantity }}</td>
-                                <td data-label="Borrow Date">{{ $td->date_needed ? $td->date_needed->format('M d, Y') : '—' }}</td>
+                                <td data-label="Borrow Date">
+                                    @if($td->borrowed_at)
+                                        <div style="font-weight: 500;">{{ $td->borrowed_at->format('M d, Y') }}</div>
+                                        <div style="font-size: 0.75rem; color: var(--color-text-muted);">{{ $td->borrowed_at->format('h:i A') }}</div>
+                                    @else
+                                        <div>{{ $td->date_needed ? $td->date_needed->format('M d, Y') : '—' }}</div>
+                                    @endif
+                                </td>
                                 <td data-label="Due Time">
                                     <span class="badge" style="background: rgba(6, 182, 212, 0.15); color: #0891b2; font-size: 0.75rem;">
-                                        End of Day Today
+                                        @if($td->expected_return_time)
+                                            Due at {{ \Carbon\Carbon::parse($td->expected_return_time)->format('g:i A') }}
+                                        @else
+                                            End of Day Today
+                                        @endif
                                     </span>
                                 </td>
                                 <td data-label="Action">
-                                    <a href="{{ $returnDeskUrl . '?request_id=' . $td->id }}" class="btn btn-primary btn-sm" style="font-size: 0.75rem; width: 100%;">
+                                    <a href="{{ $returnDeskUrl . $returnDeskSep . 'request_id=' . $td->id }}" class="btn btn-primary btn-sm" style="font-size: 0.75rem; width: 100%;">
                                         Process Return
                                     </a>
                                 </td>
@@ -847,7 +912,8 @@
                             <th>Borrower</th>
                             <th>Equipment</th>
                             <th>Qty</th>
-                            <th>Returned At</th>
+                            <th>Time Borrowed</th>
+                            <th>Time Returned</th>
                             <th>Condition</th>
                             <th>Inspected By</th>
                             <th>Notes</th>
@@ -867,7 +933,16 @@
                                 </td>
                                 <td data-label="Equipment">{{ $rr->equipment->name }}</td>
                                 <td data-label="Qty">{{ $rr->returned_quantity ?: $rr->quantity }}</td>
-                                <td data-label="Returned At">
+                                <td data-label="Time Borrowed">
+                                    @if($rr->borrowed_at)
+                                        <div style="font-size: 0.85rem; font-weight: 500;">{{ $rr->borrowed_at->format('M d, Y') }}</div>
+                                        <div style="font-size: 0.75rem; color: var(--color-text-muted);">{{ $rr->borrowed_at->format('h:i A') }}</div>
+                                    @else
+                                        <div style="font-size: 0.85rem;">{{ $rr->date_needed ? $rr->date_needed->format('M d, Y') : '—' }}</div>
+                                        <div style="font-size: 0.7rem; color: var(--color-text-muted); font-style: italic;">No time recorded</div>
+                                    @endif
+                                </td>
+                                <td data-label="Time Returned">
                                     <div style="font-size: 0.85rem; font-weight: 500;">
                                         {{ $rr->returned_at ? $rr->returned_at->format('M d, Y h:i A') : ($rr->actual_return_date ? $rr->actual_return_date->format('M d, Y') : '—') }}
                                     </div>
@@ -897,7 +972,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center text-muted" style="padding: 2.5rem 1rem;">
+                                <td colspan="9" class="text-center text-muted" style="padding: 2.5rem 1rem;">
                                     <div style="font-size: 1.1rem; font-weight: 500; margin-bottom: 0.25rem;">No returned equipment history yet.</div>
                                     <div style="font-size: 0.85rem;">Confirmed returns will appear here with condition records and staff inspection notes.</div>
                                 </td>

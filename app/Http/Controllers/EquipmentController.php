@@ -267,7 +267,19 @@ class EquipmentController extends Controller
             'quantity'             => 'required|integer|min:1',
             'purpose'              => 'required|string|max:255',
             'date_needed'          => 'required|date|after_or_equal:today',
+            'time_needed'          => 'nullable|date_format:H:i',
             'expected_return_date' => 'required|date|after_or_equal:date_needed',
+            'expected_return_time' => [
+                'nullable',
+                'date_format:H:i',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($value && $request->time_needed && $request->date_needed && $request->expected_return_date && $request->date_needed === $request->expected_return_date) {
+                        if ($value <= $request->time_needed) {
+                            $fail('The time return must be after the time needed when returning on the same day.');
+                        }
+                    }
+                },
+            ],
         ]);
 
         $user = Auth::user();
@@ -295,7 +307,7 @@ class EquipmentController extends Controller
         $result = ResourceSolver::processEquipmentRequest(
             $equipment,
             $user,
-            $request->only(['quantity', 'purpose', 'date_needed', 'expected_return_date'])
+            $request->only(['quantity', 'purpose', 'date_needed', 'time_needed', 'expected_return_date', 'expected_return_time'])
         );
 
         if ($result['status'] === 'rejected') {
@@ -408,10 +420,16 @@ class EquipmentController extends Controller
                 $equipment->decrement('available_quantity', $locked->quantity);
             }
 
+            // Record the borrowed_at timestamp when transitioning to 'borrowed'
+            if ($request->status === 'borrowed' && $oldStatus !== 'borrowed') {
+                $updateData['borrowed_at'] = now();
+            }
+
             // If returned, increment stock back
             if ($request->status === 'returned' && in_array($oldStatus, ['approved', 'borrowed'])) {
                 $equipment->increment('available_quantity', $locked->quantity);
                 $updateData['actual_return_date'] = now();
+                $updateData['returned_at']        = now();
             }
 
             // If cancelled or rejected AFTER being reserved, increment stock back

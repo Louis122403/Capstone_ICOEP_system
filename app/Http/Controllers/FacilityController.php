@@ -29,7 +29,7 @@ class FacilityController extends Controller
             $query->where('status', $status);
         }
 
-        $facilities = $query->orderBy('name')->paginate(config('icoep.items_per_page'));
+        $facilities = $query->orderNaturally()->paginate(25);
 
         return view('facilities.index', [
             'pageTitle'    => 'Campus Facilities',
@@ -41,6 +41,95 @@ class FacilityController extends Controller
             'search'       => $search,
             'statusFilter' => $status,
         ]);
+    }
+
+    public function create()
+    {
+        return view('facilities.create', [
+            'pageTitle'  => 'Add Facility',
+            'breadcrumb' => [
+                ['label' => 'Dashboard', 'url' => '/dashboard'],
+                ['label' => 'Manage Facilities', 'url' => '/dashboard?section=manage-facilities'],
+                ['label' => 'Add Facility'],
+            ],
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255',
+            'location'    => 'nullable|string|max:255',
+            'capacity'    => 'required|integer|min:1',
+            'status'      => 'required|in:available,maintenance,unavailable',
+            'description' => 'nullable|string|max:1000',
+            'image'       => 'nullable|image|max:2048',
+        ]);
+
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('facilities', 'public');
+        }
+
+        $facility = Facility::create($validated);
+
+        AuditLog::log('CREATE_FACILITY', 'facilities', $facility->id);
+
+        return redirect('/dashboard?section=manage-facilities')
+            ->with('success', "Facility \"{$facility->name}\" added successfully.");
+    }
+
+    public function edit(Facility $facility)
+    {
+        return view('facilities.edit', [
+            'pageTitle'  => 'Edit: ' . $facility->name,
+            'breadcrumb' => [
+                ['label' => 'Dashboard', 'url' => '/dashboard'],
+                ['label' => 'Manage Facilities', 'url' => '/dashboard?section=manage-facilities'],
+                ['label' => 'Edit: ' . $facility->name],
+            ],
+            'facility'   => $facility,
+        ]);
+    }
+
+    public function update(Request $request, Facility $facility)
+    {
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255',
+            'location'    => 'nullable|string|max:255',
+            'capacity'    => 'required|integer|min:1',
+            'status'      => 'required|in:available,maintenance,unavailable',
+            'description' => 'nullable|string|max:1000',
+            'image'       => 'nullable|image|max:2048',
+        ]);
+
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('facilities', 'public');
+        }
+
+        $facility->update($validated);
+
+        AuditLog::log('UPDATE_FACILITY', 'facilities', $facility->id);
+
+        return redirect('/dashboard?section=manage-facilities')
+            ->with('success', "Facility \"{$facility->name}\" updated successfully.");
+    }
+
+    public function destroy(Facility $facility)
+    {
+        $activeCount = $facility->reservations()
+            ->whereIn('status', ['pending', 'approved'])
+            ->count();
+
+        if ($activeCount > 0) {
+            return back()->with('error', "Cannot delete \"{$facility->name}\" — it has {$activeCount} active or pending reservation(s).");
+        }
+
+        $name = $facility->name;
+        AuditLog::log('DELETE_FACILITY', 'facilities', $facility->id);
+        $facility->delete();
+
+        return redirect('/dashboard?section=manage-facilities')
+            ->with('success', "Facility \"{$name}\" deleted successfully.");
     }
 
     public function show(Facility $facility)

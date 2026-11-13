@@ -42,8 +42,23 @@
                             <td data-label="Qty">{{ $aReq->quantity }}</td>
                             <td data-label="Purpose">{{ $aReq->purpose }}</td>
                             <td data-label="Schedule" style="font-size: .85rem;">
-                                <span>{{ $aReq->date_needed?->format('M d, Y') ?? '—' }}</span>
-                                <div class="text-muted" style="font-size: .75rem;">Due {{ $aReq->expected_return_date?->format('M d, Y') ?? '—' }}</div>
+                                @if($aReq->borrowed_at)
+                                    <div><strong>Borrowed:</strong> {{ $aReq->borrowed_at->format('M d, Y h:i A') }}</div>
+                                @else
+                                    <span>📅 {{ $aReq->date_needed?->format('M d, Y') ?? '—' }}</span>
+                                    @if($aReq->time_needed)
+                                        <span class="text-muted" style="font-size: .75rem;">⏰ {{ \Carbon\Carbon::parse($aReq->time_needed)->format('g:i A') }}</span>
+                                    @endif
+                                @endif
+                                <div class="text-muted" style="font-size: .75rem; margin-top: 2px;">
+                                    Due {{ $aReq->expected_return_date?->format('M d, Y') ?? '—' }}
+                                    @if($aReq->expected_return_time)
+                                        ⏰ {{ \Carbon\Carbon::parse($aReq->expected_return_time)->format('g:i A') }}
+                                    @endif
+                                </div>
+                                @if($aReq->returned_at)
+                                    <div style="font-size: .75rem; color: #059669; font-weight: 500;">Returned: {{ $aReq->returned_at->format('M d, Y h:i A') }}</div>
+                                @endif
                             </td>
                             <td data-label="Status"><x-status-badge :status="$aReq->status" /></td>
                         </tr>
@@ -72,8 +87,23 @@
                             <td data-label="Qty" style="font-weight: 600;">{{ $mReq->quantity }}</td>
                             <td data-label="Purpose">{{ $mReq->purpose }}</td>
                             <td data-label="Schedule" style="font-size: .85rem;">
-                                <span>{{ $mReq->date_needed?->format('M d, Y') ?? '—' }}</span>
-                                <div class="text-muted" style="font-size: .75rem;">Due {{ $mReq->expected_return_date?->format('M d, Y') ?? '—' }}</div>
+                                @if($mReq->borrowed_at)
+                                    <div><strong>Borrowed:</strong> {{ $mReq->borrowed_at->format('M d, Y h:i A') }}</div>
+                                @else
+                                    <span>📅 {{ $mReq->date_needed?->format('M d, Y') ?? '—' }}</span>
+                                    @if($mReq->time_needed)
+                                        <span class="text-muted" style="font-size: .75rem;">⏰ {{ \Carbon\Carbon::parse($mReq->time_needed)->format('g:i A') }}</span>
+                                    @endif
+                                @endif
+                                <div class="text-muted" style="font-size: .75rem; margin-top: 2px;">
+                                    Due {{ $mReq->expected_return_date?->format('M d, Y') ?? '—' }}
+                                    @if($mReq->expected_return_time)
+                                        ⏰ {{ \Carbon\Carbon::parse($mReq->expected_return_time)->format('g:i A') }}
+                                    @endif
+                                </div>
+                                @if($mReq->returned_at)
+                                    <div style="font-size: .75rem; color: #059669; font-weight: 500;">Returned: {{ $mReq->returned_at->format('M d, Y h:i A') }}</div>
+                                @endif
                             </td>
                             <td data-label="Status">
                                 <x-status-badge :status="$mReq->status" />
@@ -152,13 +182,25 @@
                         <label class="form-label" for="purpose">Purpose *</label>
                         <input type="text" id="purpose" name="purpose" class="form-control" required value="{{ old('purpose', request('purpose')) }}" placeholder="e.g., Class presentation">
                     </div>
-                    <div class="form-group">
-                        <label class="form-label" for="date_needed">Date Needed *</label>
-                        <input type="date" id="date_needed" name="date_needed" class="form-control" required min="{{ date('Y-m-d') }}" value="{{ old('date_needed', request('date_needed', request('date'))) }}">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="date_needed">Date Needed *</label>
+                            <input type="date" id="date_needed" name="date_needed" class="form-control" required min="{{ date('Y-m-d') }}" value="{{ old('date_needed', request('date_needed', request('date'))) }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="time_needed">Expected Time Needed *</label>
+                            <input type="time" id="time_needed" name="time_needed" class="form-control" required value="{{ old('time_needed', request('time_needed', request('time_start', '08:00'))) }}">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label" for="expected_return_date">Expected Return *</label>
-                        <input type="date" id="expected_return_date" name="expected_return_date" class="form-control" required min="{{ date('Y-m-d') }}" value="{{ old('expected_return_date', request('expected_return_date', request('return_date'))) }}">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="expected_return_date">Expected Return *</label>
+                            <input type="date" id="expected_return_date" name="expected_return_date" class="form-control" required min="{{ date('Y-m-d') }}" value="{{ old('expected_return_date', request('expected_return_date', request('return_date'))) }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="expected_return_time">Time Return *</label>
+                            <input type="time" id="expected_return_time" name="expected_return_time" class="form-control" required value="{{ old('expected_return_time', request('expected_return_time', request('time_end', '17:00'))) }}">
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; justify-content: center;">Submit Request</button>
                 </form>
@@ -167,5 +209,22 @@
     </div>
 </div>
 @include('dashboard.partials._return_modal')
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const dateNeeded = document.getElementById('date_needed');
+    const returnDate = document.getElementById('expected_return_date');
+    if (dateNeeded && returnDate) {
+        dateNeeded.addEventListener('change', function () {
+            returnDate.min = this.value;
+            if (!returnDate.value || returnDate.value < this.value) {
+                returnDate.value = this.value;
+            }
+        });
+    }
+});
+</script>
+@endpush
 @endsection
 

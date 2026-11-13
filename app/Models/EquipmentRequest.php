@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -9,8 +10,8 @@ class EquipmentRequest extends Model
 {
     protected $fillable = [
         'equipment_id', 'user_id', 'quantity', 'purpose',
-        'date_needed', 'expected_return_date', 'actual_return_date',
-        'status', 'remarks', 'approved_by',
+        'date_needed', 'time_needed', 'expected_return_date', 'expected_return_time', 'actual_return_date',
+        'status', 'remarks', 'approved_by', 'borrowed_at',
         'return_requested_at', 'return_photo', 'returned_quantity', 'returned_at',
         'confirmed_by', 'return_condition', 'return_notes', 'days_late',
     ];
@@ -26,6 +27,7 @@ class EquipmentRequest extends Model
             'actual_return_date'   => 'date',
             'return_requested_at'  => 'datetime',
             'returned_at'          => 'datetime',
+            'borrowed_at'          => 'datetime',
             'returned_quantity'    => 'integer',
             'days_late'            => 'integer',
         ];
@@ -85,5 +87,19 @@ class EquipmentRequest extends Model
     public function scopeReturningToday($query)
     {
         return $query->whereIn('status', ['borrowed', 'approved'])->whereDate('expected_return_date', now()->toDateString());
+    }
+
+    public function getNeededAtAttribute(): ?Carbon
+    {
+        if (!$this->date_needed) return null;
+        $time = $this->time_needed ? substr($this->time_needed, 0, 5) : '00:00';
+        return Carbon::parse($this->date_needed->toDateString() . ' ' . $time);
+    }
+
+    public function getExpectedReturnAtAttribute(): ?Carbon
+    {
+        if (!$this->expected_return_date) return null;
+        $time = $this->expected_return_time ? substr($this->expected_return_time, 0, 5) : '23:59';
+        return Carbon::parse($this->expected_return_date->toDateString() . ' ' . $time);
     }
 }

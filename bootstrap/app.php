@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\CheckActiveUser::class,
             \App\Http\Middleware\SanitizeInput::class,
             \App\Http\Middleware\SetSecurityHeaders::class,
+            \App\Http\Middleware\AutoBackup::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

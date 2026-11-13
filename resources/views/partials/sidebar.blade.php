@@ -121,7 +121,7 @@
             </div>
         </div>
 
-        @if(auth()->user()->hasPermission('facility.approve') || auth()->user()->hasPermission('equipment.approve') || auth()->user()->hasPermission('user.view') || auth()->user()->hasPermission('equipment.manage') || auth()->user()->hasPermission('inventory.manage_own'))
+        @if(auth()->user()->hasRole('Administrator') || auth()->user()->hasPermission('facility.approve') || auth()->user()->hasPermission('equipment.approve') || auth()->user()->hasPermission('user.view') || auth()->user()->hasPermission('equipment.manage') || auth()->user()->hasPermission('inventory.manage_own') || auth()->user()->hasPermission('facility.manage'))
         <div class="nav-section">
             <div class="nav-section-title">
                 <span>Management</span>
@@ -145,6 +145,16 @@
                         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
                     </svg>
                     <span>Booking Requests</span>
+                </a>
+                @endif
+
+                @if(auth()->user()->hasRole('Administrator') || auth()->user()->hasPermission('facility.manage') || auth()->user()->hasPermission('facility.approve'))
+                <a href="{{ url('/dashboard?section=manage-facilities') }}" class="nav-link {{ $currentSection === 'manage-facilities' ? 'active' : '' }}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    <span>Manage Facilities</span>
                 </a>
                 @endif
 
@@ -186,6 +196,17 @@
                     <span>Equipment Inventory</span>
                 </a>
                 @endif
+
+                @if(auth()->user()->hasRole('Administrator'))
+                <a href="{{ url('/dashboard?section=backups') }}" class="nav-link {{ $currentSection === 'backups' ? 'active' : '' }}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                    </svg>
+                    <span>Data Backup</span>
+                </a>
+                @endif
             </div>
         </div>
         @endif
@@ -208,6 +229,31 @@
             </div>
         </div>
         @endif
+
+        <div class="nav-section">
+            <div class="nav-section-title">
+                <span>Support</span>
+            </div>
+            <div class="nav-section-content">
+                <a href="{{ url('/user-guide') }}" class="nav-link {{ request()->is('user-guide*') ? 'active' : '' }}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <span>User Guide</span>
+                </a>
+
+                <a href="{{ url('/about-us') }}" class="nav-link {{ request()->is('about-us*') ? 'active' : '' }}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    <span>About Us</span>
+                </a>
+            </div>
+        </div>
 
     </nav>
 

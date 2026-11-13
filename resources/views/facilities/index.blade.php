@@ -3,6 +3,9 @@
 @section('title', $pageTitle . ' — ' . config('icoep.app_name'))
 
 @section('content')
+@php
+    $canManage = auth()->check() && (auth()->user()->hasRole('Administrator') || auth()->user()->hasPermission('facility.manage') || auth()->user()->hasPermission('facility.approve'));
+@endphp
 <div class="page-header animate-fade-in-up">
     <div>
         <h1 class="page-title">Campus Facilities</h1>
@@ -34,8 +37,12 @@
             <div class="grid grid-3">
                 @foreach($facilities as $facility)
                     <a href="{{ url('/facilities/' . $facility->id) }}" class="item-card">
-                        <div class="item-card-image" style="height: 120px; background: var(--gradient-surface); display: flex; align-items: center; justify-content: center;">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                        <div class="item-card-image" style="height: 130px; background: var(--gradient-surface); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            @if($facility->image_url)
+                                <img src="{{ $facility->image_url }}" alt="{{ $facility->name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                            @else
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                            @endif
                         </div>
                         <div class="item-card-body">
                             <div class="item-card-meta">

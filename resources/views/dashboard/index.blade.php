@@ -5,6 +5,7 @@
 {{-- Section-specific content rendered from partials --}}
 @switch($currentSection)
     @case('facilities')
+    @case('manage-facilities')
         @include('dashboard.partials._facilities')
         @break
     @case('equipment')
@@ -47,6 +48,9 @@
         @break
     @case('reports')
         @include('dashboard.partials._reports')
+        @break
+    @case('backups')
+        @include('dashboard.partials._backups')
         @break
     @case('calendar')
         @include('dashboard.partials._calendar')

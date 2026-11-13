@@ -104,13 +104,32 @@
                             </td>
                             <td data-label="Qty">{{ $item->quantity }}</td>
                             <td data-label="Borrow Period" style="font-size: .85rem;">
-                                {{ $item->date_needed?->format('M d, Y') ?? '—' }}
-                                <span class="text-muted">→</span>
-                                {{ $item->expected_return_date?->format('M d, Y') ?? '—' }}
+                                @if($item->borrowed_at)
+                                    <div><strong>Borrowed:</strong> {{ $item->borrowed_at->format('M d, Y h:i A') }}</div>
+                                    <div class="text-muted" style="font-size: .75rem;">
+                                        Due: {{ $item->expected_return_date?->format('M d, Y') ?? '—' }}
+                                        @if($item->expected_return_time)
+                                            ({{ \Carbon\Carbon::parse($item->expected_return_time)->format('g:i A') }})
+                                        @endif
+                                    </div>
+                                @else
+                                    <div>
+                                        {{ $item->date_needed?->format('M d, Y') ?? '—' }}
+                                        @if($item->time_needed)
+                                            <span class="text-muted" style="font-size: .75rem;">({{ \Carbon\Carbon::parse($item->time_needed)->format('g:i A') }})</span>
+                                        @endif
+                                    </div>
+                                    <div class="text-muted" style="font-size: .75rem;">
+                                        Due: {{ $item->expected_return_date?->format('M d, Y') ?? '—' }}
+                                        @if($item->expected_return_time)
+                                            ({{ \Carbon\Carbon::parse($item->expected_return_time)->format('g:i A') }})
+                                        @endif
+                                    </div>
+                                @endif
                             </td>
                             <td data-label="Returned" style="font-size: .85rem;">
                                 @if($item->status === 'returned')
-                                    {{ $item->returned_at?->format('M d, Y') ?? $item->actual_return_date?->format('M d, Y') }}
+                                    <div>{{ $item->returned_at?->format('M d, Y h:i A') ?? ($item->actual_return_date?->format('M d, Y') ?? '—') }}</div>
                                     @if($item->return_condition)
                                         <div><span class="badge {{ $item->return_condition === 'good' ? 'badge-success' : 'badge-error' }}" style="font-size: .65rem;">{{ ucfirst($item->return_condition) }}</span></div>
                                     @endif

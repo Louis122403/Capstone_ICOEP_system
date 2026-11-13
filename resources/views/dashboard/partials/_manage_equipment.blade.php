@@ -62,7 +62,7 @@
                 <thead>
                     <tr>
                         <th style="width:36px;"><input type="checkbox" id="select-all-eq" title="Select all pending"></th>
-                        <th>Requestor</th><th>Equipment</th><th>Qty</th><th>Date Needed</th>
+                        <th>Requestor</th><th>Equipment</th><th>Qty</th><th>Schedule</th>
                         <th>Stock</th><th>Status</th><th>Action</th>
                     </tr>
                 </thead>
@@ -82,7 +82,20 @@
                         </td>
                         <td data-label="Equipment">{{ $req->equipment?->name ?? 'Unknown Equipment' }}</td>
                         <td data-label="Quantity">{{ $req->quantity }}</td>
-                        <td data-label="Date Needed">{{ $req->date_needed?->format('M d, Y') ?? '—' }}</td>
+                        <td data-label="Schedule">
+                            <div>
+                                {{ $req->date_needed?->format('M d, Y') ?? '—' }}
+                                @if($req->time_needed)
+                                    <span class="text-muted" style="font-size: .75rem;">({{ \Carbon\Carbon::parse($req->time_needed)->format('g:i A') }})</span>
+                                @endif
+                            </div>
+                            <div class="text-muted" style="font-size: .75rem;">
+                                Due {{ $req->expected_return_date?->format('M d, Y') ?? '—' }}
+                                @if($req->expected_return_time)
+                                    ({{ \Carbon\Carbon::parse($req->expected_return_time)->format('g:i A') }})
+                                @endif
+                            </div>
+                        </td>
                         <td data-label="Stock">
                             @if($req->status === 'pending' && isset($stockMap[$req->id]))
                                 @php $stock = $stockMap[$req->id]; @endphp

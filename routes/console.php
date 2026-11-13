@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\BackupDatabaseCommand;
 use App\Console\Commands\CheckOverdueEquipment;
 use App\Console\Commands\DeactivateInactiveUsers;
 use App\Console\Commands\ExpirePendingRequests;
@@ -62,5 +63,13 @@ Schedule::command(\App\Console\Commands\PruneNotifications::class)
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/notification_prune.log'))
     ->description('Delete old read notifications and cap each user inbox');
+
+// Daily automated database backup — runs every day at 3:00 AM
+// Uses --rotate to delete all previous backups before creating a new one (keeps only the latest)
+Schedule::command(BackupDatabaseCommand::class, ['--rotate'])
+    ->dailyAt('03:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/database_backup.log'))
+    ->description('Automated daily database backup with rotation (keeps latest only)');
 
 

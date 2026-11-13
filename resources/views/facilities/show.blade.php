@@ -3,13 +3,24 @@
 @section('title', $pageTitle . ' — ' . config('icoep.app_name'))
 
 @section('content')
+@php
+    $canManage = auth()->check() && (auth()->user()->hasRole('Administrator') || auth()->user()->hasPermission('facility.manage') || auth()->user()->hasPermission('facility.approve'));
+@endphp
 <div class="page-header animate-fade-in-up">
     <div>
         <h1 class="page-title">{{ $facility->name }}</h1>
         <p class="page-subtitle">{{ $facility->location }} &bull; Capacity: {{ $facility->capacity }}</p>
     </div>
-    <div class="header-actions-mobile">
-        <a href="{{ url('/facilities') }}" class="btn btn-secondary">&larr; Back to List</a>
+    <div class="header-actions-mobile" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+        @if($canManage)
+            <a href="{{ url('/facilities/' . $facility->id . '/edit') }}" class="btn btn-secondary btn-sm">Edit Facility</a>
+            <form method="POST" action="{{ url('/facilities/' . $facility->id) }}" style="margin: 0; display: inline;" onsubmit="return confirm('Are you sure you want to delete &quot;{{ $facility->name }}&quot;?')">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-danger btn-sm" style="color: #dc2626; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2);">Delete</button>
+            </form>
+        @endif
+        <a href="{{ url('/dashboard?section=facilities') }}" class="btn btn-secondary btn-sm">&larr; Back to Facilities</a>
     </div>
 </div>
 
@@ -34,6 +45,11 @@
                 </div>
             </div>
             <div class="card-body">
+                @if($facility->image_url)
+                    <div style="margin-bottom: 1.25rem;">
+                        <img src="{{ $facility->image_url }}" alt="{{ $facility->name }}" style="width: 100%; max-height: 280px; object-fit: cover; border-radius: 8px; border: 1px solid var(--color-border, #cbd5e1);">
+                    </div>
+                @endif
                 <p style="line-height: 1.8;">{{ $facility->description ?: 'No description available.' }}</p>
             </div>
         </div>

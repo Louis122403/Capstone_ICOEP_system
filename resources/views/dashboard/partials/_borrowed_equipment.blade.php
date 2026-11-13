@@ -98,13 +98,29 @@
                         <td data-label="Schedule">
                             <div style="font-size: 0.85rem;">
                                 <span class="text-muted">Needed:</span> {{ $req->date_needed ? $req->date_needed->format('M d, Y') : '—' }}
+                                @if($req->time_needed)
+                                    <span class="text-muted" style="font-size: 0.75rem;">({{ \Carbon\Carbon::parse($req->time_needed)->format('g:i A') }})</span>
+                                @endif
                             </div>
+                            @if($req->borrowed_at)
+                                <div style="font-size: 0.85rem;">
+                                    <span class="text-muted">Borrowed:</span> {{ $req->borrowed_at->format('M d, Y h:i A') }}
+                                </div>
+                            @endif
                             <div style="font-size: 0.85rem; font-weight: {{ $isOverdue ? '600' : 'normal' }}; color: {{ $isOverdue ? '#dc2626' : 'inherit' }};">
                                 <span class="text-muted">Due:</span> {{ $req->expected_return_date ? $req->expected_return_date->format('M d, Y') : '—' }}
+                                @if($req->expected_return_time)
+                                    <span style="font-size: 0.75rem;">({{ \Carbon\Carbon::parse($req->expected_return_time)->format('g:i A') }})</span>
+                                @endif
                                 @if($isOverdue)
                                     <span class="badge badge-error" style="font-size: 0.65rem; margin-left: 0.25rem;">Overdue</span>
                                 @endif
                             </div>
+                            @if($req->returned_at)
+                                <div style="font-size: 0.85rem; color: #059669; font-weight: 500;">
+                                    <span class="text-muted">Returned:</span> {{ $req->returned_at->format('M d, Y h:i A') }}
+                                </div>
+                            @endif
                         </td>
                         <td data-label="Status">
                             <x-status-badge :status="$req->status" />
@@ -219,8 +235,13 @@
                         </td>
                         <td data-label="Qty">{{ $ret->quantity }} unit(s)</td>
                         <td data-label="Borrowed" style="font-size: .85rem;">
-                            {{ $ret->date_needed?->format('M d, Y') ?? '—' }}<br>
-                            <span class="text-muted">Due {{ $ret->expected_return_date?->format('M d, Y') ?? '—' }}</span>
+                            @if($ret->borrowed_at)
+                                <div>{{ $ret->borrowed_at->format('M d, Y') }}</div>
+                                <div style="font-size: 0.75rem; color: var(--color-text-muted);">{{ $ret->borrowed_at->format('h:i A') }}</div>
+                            @else
+                                <div>{{ $ret->date_needed?->format('M d, Y') ?? '—' }}</div>
+                            @endif
+                            <div class="text-muted" style="font-size: 0.75rem; margin-top: 2px;">Due {{ $ret->expected_return_date?->format('M d, Y') ?? '—' }}</div>
                         </td>
                         <td data-label="Returned" style="font-size: .85rem;">
                             {{ $ret->returned_at?->format('M d, Y g:i A') ?? ($ret->actual_return_date?->format('M d, Y') ?? '—') }}

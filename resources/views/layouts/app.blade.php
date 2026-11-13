@@ -24,6 +24,57 @@
     <!-- Vite assets: Tailwind CSS v4 + app scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
+
+    <style>
+        /* Responsive & Dark Mode Footer */
+        .app-footer {
+            border-top: 1px solid var(--color-surface-200, #e2e8f0);
+            background: var(--bg-card, #ffffff);
+            color: var(--color-surface-500, #64748b);
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+            width: 100%;
+            margin-top: auto;
+        }
+        .footer-content {
+            padding: 1rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            font-size: 0.8125rem;
+            color: inherit;
+        }
+        @media (min-width: 640px) {
+            .footer-content {
+                flex-direction: row;
+            }
+        }
+        .footer-sub a {
+            color: var(--color-brand-600, #0284c7);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .footer-sub a:hover {
+            text-decoration: underline;
+        }
+        /* Dark Mode */
+        html.dark .app-footer {
+            background: #0f172a !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+            color: #94a3b8 !important;
+        }
+        html.dark .footer-content,
+        html.dark .footer-content p {
+            color: #94a3b8 !important;
+        }
+        html.dark .footer-sub a {
+            color: #38bdf8 !important;
+        }
+        html.dark .footer-sub a:hover {
+            color: #7dd3fc !important;
+        }
+    </style>
 </head>
 <body>
     <div class="app-layout">
@@ -103,9 +154,17 @@
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                                 My Profile
                             </a>
+                            <a href="{{ url('/user-guide') }}" class="user-dropdown-item">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                                User Guide
+                            </a>
                             <a href="{{ url('/privacy/policy') }}" class="user-dropdown-item">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                                 Privacy Policy
+                            </a>
+                            <a href="{{ url('/about-us') }}" class="user-dropdown-item">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                About Us
                             </a>
                             <div class="user-dropdown-divider"></div>
                             <form method="POST" action="{{ route('logout') }}">
@@ -125,18 +184,20 @@
                 @include('partials.flash')
                 @yield('content')
             </main>
+
+            <!-- Footer -->
+            <footer class="app-footer">
+                <div class="footer-content">
+                    <p>&copy; {{ date('Y') }} {{ config('icoep.institution_name') }}. All rights reserved.</p>
+                    <p class="footer-sub">{{ config('icoep.app_full_name') }} v{{ config('icoep.app_version') }} &bull;
+                        <a href="{{ url('/user-guide') }}">User Guide</a> &bull;
+                        <a href="{{ url('/privacy/policy') }}">Privacy Policy</a> &bull;
+                        <a href="{{ url('/about-us') }}">About Us</a>
+                    </p>
+                </div>
+            </footer>
         </div><!-- /.main-content -->
     </div><!-- /.app-layout -->
-
-    <!-- Footer -->
-    <footer class="app-footer">
-        <div class="footer-content">
-            <p>&copy; {{ date('Y') }} {{ config('icoep.institution_name') }}. All rights reserved.</p>
-            <p class="footer-sub">{{ config('icoep.app_full_name') }} v{{ config('icoep.app_version') }} &bull;
-                <a href="{{ url('/privacy/policy') }}">Privacy Policy</a>
-            </p>
-        </div>
-    </footer>
 
     <!-- Additional page-level scripts -->
     @stack('scripts')

@@ -547,10 +547,12 @@ class ResourceSolver
             $lockedEquip = Equipment::lockForUpdate()->find($equipment->id);
             EquipmentRequest::where('equipment_id', $equipment->id)->lockForUpdate()->get();
 
-            $quantity       = (int) $data['quantity'];
-            $purpose        = $data['purpose'];
-            $dateNeeded     = $data['date_needed'];
-            $expectedReturn = $data['expected_return_date'];
+            $quantity           = (int) $data['quantity'];
+            $purpose            = $data['purpose'];
+            $dateNeeded         = $data['date_needed'];
+            $timeNeeded         = $data['time_needed'] ?? null;
+            $expectedReturn     = $data['expected_return_date'];
+            $expectedReturnTime = $data['expected_return_time'] ?? null;
 
             // Rule 0: User cannot borrow if having equipment overdue beyond threshold
             $thresholdDays = (int) config('icoep.block_borrowing_after_days_overdue', 3);
@@ -584,7 +586,9 @@ class ResourceSolver
                     'quantity'             => $quantity,
                     'purpose'              => $purpose,
                     'date_needed'          => $dateNeeded,
+                    'time_needed'          => $timeNeeded,
                     'expected_return_date' => $expectedReturn,
+                    'expected_return_time' => $expectedReturnTime,
                     'status'               => 'rejected',
                     'remarks'              => $reason,
                     'approved_by'          => null,
@@ -613,7 +617,9 @@ class ResourceSolver
                     'quantity'             => $quantity,
                     'purpose'              => $purpose,
                     'date_needed'          => $dateNeeded,
+                    'time_needed'          => $timeNeeded,
                     'expected_return_date' => $expectedReturn,
+                    'expected_return_time' => $expectedReturnTime,
                     'status'               => 'rejected',
                     'remarks'              => $reason,
                     'approved_by'          => null,
@@ -640,7 +646,9 @@ class ResourceSolver
                     'quantity'             => $quantity,
                     'purpose'              => $purpose,
                     'date_needed'          => $dateNeeded,
+                    'time_needed'          => $timeNeeded,
                     'expected_return_date' => $expectedReturn,
+                    'expected_return_time' => $expectedReturnTime,
                     'status'               => 'approved',
                     'remarks'              => 'Auto-approved: stock reserved.',
                     'approved_by'          => null,
@@ -674,7 +682,9 @@ class ResourceSolver
                 'quantity'             => $quantity,
                 'purpose'              => $purpose,
                 'date_needed'          => $dateNeeded,
+                'time_needed'          => $timeNeeded,
                 'expected_return_date' => $expectedReturn,
+                'expected_return_time' => $expectedReturnTime,
                 'status'               => 'pending',
                 'remarks'              => 'Pending admin approval',
                 'approved_by'          => null,

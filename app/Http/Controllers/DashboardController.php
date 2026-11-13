@@ -36,7 +36,7 @@ class DashboardController extends Controller
 
         // Load section-specific data
         match ($section) {
-            'facilities'                         => $this->loadFacilities($data, $request),
+            'facilities', 'manage-facilities'    => $this->loadFacilities($data, $request),
             'equipment'                          => $this->loadEquipment($data, $request),
             'booked-facilities', 'my-bookings'   => $this->loadBookedFacilities($data, $request, $user),
             'borrowed-equipment', 'my-equipment' => $this->loadBorrowedEquipment($data, $request, $user),
@@ -50,6 +50,7 @@ class DashboardController extends Controller
             'manage-equipment'  => $this->loadManageEquipment($data, $request),
             'equipment-returns' => $this->loadEquipmentReturns($data, $request),
             'reports'          => $this->loadReports($data, $request),
+            'backups'          => $this->loadBackups($data, $user),
             'calendar'         => null, // Calendar loads data via API
             default            => $this->loadOverview($data, $user),
         };
@@ -143,7 +144,7 @@ class DashboardController extends Controller
             $query->where('status', $status);
         }
 
-        $data['facilities']   = $query->orderBy('name')->paginate(15);
+        $data['facilities']   = $query->orderNaturally()->paginate(25);
         $data['statusFilter'] = $status;
 
         // Facilities occupied right now by an approved booking (others are open)
@@ -692,6 +693,7 @@ class DashboardController extends Controller
         $data['reportType'] = $reportType;
 
         match ($reportType) {
+            'equipment-usage'  => $this->loadEquipmentUsage($data, $request),
             'event-engagement' => $this->loadEventEngagement($data, $request),
             'audit-log'        => $this->loadAuditLog($data, $request),
             default            => $this->loadFacilityUsage($data, $request),
@@ -708,9 +710,31 @@ class DashboardController extends Controller
                 DB::raw('COUNT(*) as total'),
                 DB::raw('SUM(CASE WHEN status = "approved" THEN 1 ELSE 0 END) as approved')
             )
-            ->whereBetween('created_at', [$from, $to])
+            ->whereBetween('created_at', [$from . ' 00:00:00', $to . ' 23:59:59'])
             ->groupBy('facility_id')
             ->with('facility')
+            ->get();
+
+        $data['dateFrom'] = $from;
+        $data['dateTo']   = $to;
+    }
+
+    protected function loadEquipmentUsage(array &$data, Request $request): void
+    {
+        $from = $request->get('from', now()->subMonth()->format('Y-m-d'));
+        $to   = $request->get('to', now()->format('Y-m-d'));
+
+        $data['equipmentStats'] = EquipmentRequest::select(
+                'equipment_id',
+                DB::raw('COUNT(*) as total'),
+                DB::raw('SUM(quantity) as total_quantity'),
+                DB::raw('SUM(CASE WHEN status IN ("approved", "borrowed", "returned") THEN 1 ELSE 0 END) as approved'),
+                DB::raw('SUM(CASE WHEN status IN ("approved", "borrowed", "returned") THEN quantity ELSE 0 END) as approved_quantity'),
+                DB::raw('SUM(CASE WHEN status = "returned" THEN 1 ELSE 0 END) as returned')
+            )
+            ->whereBetween('created_at', [$from . ' 00:00:00', $to . ' 23:59:59'])
+            ->groupBy('equipment_id')
+            ->with(['equipment.custodianUnit'])
             ->get();
 
         $data['dateFrom'] = $from;
@@ -740,5 +764,15 @@ class DashboardController extends Controller
         }
 
         $data['auditLogs'] = $query->paginate(20);
+    }
+
+    // ─── BACKUPS (Admin) ─────────────────────────────────────────────────
+
+    protected function loadBackups(array &$data, $user): void
+    {
+        if (!$user->hasRole('Administrator')) {
+            abort(403);
+        }
+        // Data is loaded directly in the partial view
     }
 }

@@ -14,6 +14,7 @@
     <div class="card-body" style="padding: .75rem 1rem;">
         <div class="filter-group">
             <a href="{{ url('/dashboard?section=reports&report=facility-usage') }}" class="filter-btn {{ ($reportType ?? '') === 'facility-usage' ? 'active' : '' }}">Facility Usage</a>
+            <a href="{{ url('/dashboard?section=reports&report=equipment-usage') }}" class="filter-btn {{ ($reportType ?? '') === 'equipment-usage' ? 'active' : '' }}">Equipment Usage</a>
             <a href="{{ url('/dashboard?section=reports&report=event-engagement') }}" class="filter-btn {{ ($reportType ?? '') === 'event-engagement' ? 'active' : '' }}">Event Engagement</a>
             <a href="{{ url('/dashboard?section=reports&report=audit-log') }}" class="filter-btn {{ ($reportType ?? '') === 'audit-log' ? 'active' : '' }}">Audit Log</a>
         </div>
@@ -94,6 +95,119 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 {
                     label: 'Approved',
+                    data: approvedData,
+                    backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                    borderColor: 'rgb(16, 185, 129)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top', labels: { color: document.documentElement.classList.contains('dark') ? '#cbd5e1' : '#475569' } }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: document.documentElement.classList.contains('dark') ? '#334155' : '#e2e8f0' }, ticks: { stepSize: 1, color: document.documentElement.classList.contains('dark') ? '#94a3b8' : '#64748b' } },
+                x: { grid: { display: false }, ticks: { color: document.documentElement.classList.contains('dark') ? '#94a3b8' : '#64748b' } }
+            }
+        }
+    });
+});
+</script>
+@endpush
+
+@elseif($reportType === 'equipment-usage')
+<div class="card animate-fade-in-up" style="animation-delay: 100ms; margin-top: 1rem;">
+    <div class="card-header"><h3 class="card-title">Equipment Usage Report</h3></div>
+    <div class="card-body">
+        <form method="GET" action="{{ url('/dashboard') }}" class="search-bar report-filter-bar">
+            <input type="hidden" name="section" value="reports">
+            <input type="hidden" name="report" value="equipment-usage">
+            <div class="form-group mb-0">
+                <input type="date" name="from" class="form-control report-date-input" value="{{ $dateFrom ?? '' }}">
+            </div>
+            <span class="text-muted">to</span>
+            <div class="form-group mb-0">
+                <input type="date" name="to" class="form-control report-date-input" value="{{ $dateTo ?? '' }}">
+            </div>
+            <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+        </form>
+
+        <div class="report-chart-container">
+            <canvas id="equipmentUsageChart"></canvas>
+        </div>
+
+        <div class="table-responsive">
+            <table class="data-table mobile-cards">
+                <thead>
+                    <tr>
+                        <th scope="col">Equipment</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Total Requests</th>
+                        <th scope="col">Units Requested</th>
+                        <th scope="col">Approved / Borrowed</th>
+                        <th scope="col">Returned</th>
+                        <th scope="col">Usage Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @forelse($equipmentStats ?? [] as $stat)
+                    @php
+                        $pct = $stat->total > 0 ? round(($stat->approved / $stat->total) * 100) : 0;
+                    @endphp
+                    <tr>
+                        <td data-label="Equipment" class="font-semibold">{{ $stat->equipment->name ?? '—' }}</td>
+                        <td data-label="Category"><span class="badge badge-general">{{ $stat->equipment->category ?? '—' }}</span></td>
+                        <td data-label="Total Requests">{{ $stat->total }}</td>
+                        <td data-label="Units Requested">{{ $stat->total_quantity ?? 0 }}</td>
+                        <td data-label="Approved / Borrowed">{{ $stat->approved }}</td>
+                        <td data-label="Returned">{{ $stat->returned }}</td>
+                        <td data-label="Usage Rate">
+                            <div class="progress-bar-wrapper">
+                                <div class="progress-bar-track">
+                                    <div class="progress-bar-fill progress-bar-fill-brand" style="width: {{ $pct }}%;"></div>
+                                </div>
+                                <span class="progress-bar-label">{{ $pct }}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="7" class="text-center text-muted empty-table-cell">No equipment requests found for the selected period.</td></tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('equipmentUsageChart');
+    if (!ctx) return;
+    
+    const labels = {!! json_encode($equipmentStats->map(fn($s) => $s->equipment->name ?? '—')) !!};
+    const totalData = {!! json_encode($equipmentStats->map(fn($s) => (int)$s->total)) !!};
+    const approvedData = {!! json_encode($equipmentStats->map(fn($s) => (int)$s->approved)) !!};
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Total Requests',
+                    data: totalData,
+                    backgroundColor: 'rgba(56, 189, 248, 0.5)',
+                    borderColor: 'rgb(56, 189, 248)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: 'Approved / Borrowed',
                     data: approvedData,
                     backgroundColor: 'rgba(16, 185, 129, 0.7)',
                     borderColor: 'rgb(16, 185, 129)',

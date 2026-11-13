@@ -9,6 +9,7 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\CalendarController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,7 +24,7 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
-// Privacy Policy (accessible to all)
+// Privacy Policy
 Route::get('/privacy/policy', function () {
     return view('privacy.policy', [
         'pageTitle' => 'Data Privacy Policy',
@@ -32,7 +33,40 @@ Route::get('/privacy/policy', function () {
             ['label' => 'Privacy Policy'],
         ],
     ]);
-});
+})->middleware('auth');
+
+// User Guide & System Manual
+Route::get('/user-guide', function () {
+    return view('guide.index', [
+        'pageTitle' => 'User Guide & System Manual',
+        'breadcrumb' => [
+            ['label' => 'Dashboard', 'url' => '/dashboard'],
+            ['label' => 'User Guide'],
+        ],
+    ]);
+})->middleware('auth');
+
+// About Us / Institutional Profile
+Route::get('/about-us', function () {
+    return view('about.index', [
+        'pageTitle' => 'About Us',
+        'breadcrumb' => [
+            ['label' => 'Dashboard', 'url' => '/dashboard'],
+            ['label' => 'About Us'],
+        ],
+    ]);
+})->middleware('auth');
+Route::get('/about', fn() => redirect('/about-us'));
+
+// Direct / fallback route for uploaded storage files (facilities, return photos, equipment)
+Route::get('/storage/{path}', function ($path) {
+    $basePath = realpath(storage_path('app/public'));
+    $targetPath = realpath(storage_path('app/public/' . $path));
+    if (!$targetPath || !str_starts_with($targetPath, $basePath) || !is_file($targetPath)) {
+        abort(404);
+    }
+    return response()->file($targetPath);
+})->where('path', '.*');
 
 // ──────────────────────────────────────────────────
 // Authenticated Routes — Unified Dashboard
@@ -53,13 +87,20 @@ Route::middleware('auth')->group(function () {
     Route::get('/events', fn() => redirect('/dashboard?section=events'));
     Route::get('/announcements', fn() => redirect('/dashboard?section=announcements'));
     Route::get('/users', fn() => redirect('/dashboard?section=users'));
-    Route::get('/facilities/manage', fn() => redirect('/dashboard?section=manage-bookings'));
+    Route::get('/backups', fn() => redirect('/dashboard?section=backups'));
+    Route::get('/facilities/manage', fn() => redirect('/dashboard?section=manage-facilities'));
     Route::get('/equipment/manage', fn() => redirect('/dashboard?section=manage-equipment'));
     Route::get('/reports/facility-usage', fn() => redirect('/dashboard?section=reports&report=facility-usage'));
+    Route::get('/reports/equipment-usage', fn() => redirect('/dashboard?section=reports&report=equipment-usage'));
     Route::get('/reports/event-engagement', fn() => redirect('/dashboard?section=reports&report=event-engagement'));
     Route::get('/reports/audit-log', fn() => redirect('/dashboard?section=reports&report=audit-log'));
 
     // ─── Detail/Show routes (still separate pages) ───
+    Route::get('/facilities/create', [FacilityController::class, 'create'])->middleware('permission:facility.manage,facility.approve');
+    Route::post('/facilities', [FacilityController::class, 'store'])->middleware('permission:facility.manage,facility.approve');
+    Route::get('/facilities/{facility}/edit', [FacilityController::class, 'edit'])->middleware('permission:facility.manage,facility.approve');
+    Route::put('/facilities/{facility}', [FacilityController::class, 'update'])->middleware('permission:facility.manage,facility.approve');
+    Route::delete('/facilities/{facility}', [FacilityController::class, 'destroy'])->middleware('permission:facility.manage,facility.approve');
     Route::get('/facilities/{facility}', [FacilityController::class, 'show'])->middleware('permission:facility.view');
     Route::get('/equipment/create', [EquipmentController::class, 'create'])->middleware('permission:equipment.manage,inventory.manage_own');
     Route::get('/equipment/returns', [EquipmentReturnController::class, 'index'])->middleware('permission:equipment.approve');
@@ -129,5 +170,11 @@ Route::middleware('auth')->group(function () {
 
     // ─── Calendar API ───
     Route::get('/api/calendar/events', [CalendarController::class, 'getEvents']);
+
+    // ─── Data Backup (Admin) ───
+    Route::post('/backups', [BackupController::class, 'create']);
+    Route::post('/backups/auto-toggle', [BackupController::class, 'toggleAuto'])->name('backups.toggle-auto');
+    Route::get('/backups/{filename}/download', [BackupController::class, 'download']);
+    Route::delete('/backups/{filename}', [BackupController::class, 'destroy']);
 });
 
